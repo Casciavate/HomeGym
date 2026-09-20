@@ -7,6 +7,11 @@ import AuthGate from "./AuthGate.jsx";
 import * as db from "./lib/db.js";
 import seedHistoryData from "../supabase/seed-history.json";
 
+/* The one real account this training log belongs to. seed-history.json is
+   Sandro's actual personal training data — it is only ever imported into
+   this account. Any other Google account that signs in starts empty. */
+const OWNER_EMAIL = "sandrocasciani1@gmail.com";
+
 /* ------------------------------------------------------------------ */
 /*  Design tokens — "Pine & Amber" training journal                    */
 /* ------------------------------------------------------------------ */
@@ -910,9 +915,13 @@ function Tracker({ userId, userEmail, onSignOut }) {
       setLoaded(false);
       setErrorMsg("");
       try {
-        // One-time seed migration: if this account has no sessions yet,
-        // import the real training history baked into seed-history.json.
-        await db.seedHistoryIfEmpty(userId, seedHistoryData.history || []);
+        // One-time seed migration: only for the real owner's account, and
+        // only if that account has no sessions yet. seed-history.json is
+        // Sandro's actual personal training log — it must never be copied
+        // into anyone else's account. Every other sign-in starts empty.
+        if ((userEmail || "").toLowerCase() === OWNER_EMAIL) {
+          await db.seedHistoryIfEmpty(userId, seedHistoryData.history || []);
+        }
 
         const [sessions, pendingCarry, bLog] = await Promise.all([
           db.fetchSessions(userId),
