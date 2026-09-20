@@ -683,6 +683,14 @@ const SUGGEST_KG = {
 };
 const repsLow = (s) => { const m = String(s).match(/\d+/); return m ? m[0] : ""; };
 
+/* Rest timer: pull the first number of seconds out of a rest string
+   ("90 s", "60–90 s (after both sides)"). "—" (finishers with no rest) → null. */
+function parseRestSeconds(restStr) {
+  const m = String(restStr || "").match(/\d+/);
+  return m ? parseInt(m[0], 10) : null;
+}
+const fmtClock = (secs) => `${Math.floor(secs / 60)}:${String(secs % 60).padStart(2, "0")}`;
+
 function lastWeightFor(exId, history) {
   for (let i = history.length - 1; i >= 0; i--) {
     const h = history[i];
@@ -768,13 +776,28 @@ function Chip({ children, tone = "mute" }) {
   );
 }
 
-function SetRow({ i, set, onChange }) {
+function SetRow({ i, set, onChange, weightStep = 1 }) {
+  const bump = (field, delta, decimals) => {
+    const cur = parseFloat(set[field]) || 0;
+    const next = Math.max(0, Math.round((cur + delta) * 100) / 100);
+    onChange({ ...set, [field]: decimals ? String(next) : String(Math.round(next)) });
+  };
+  const nudgeBtn = (label, onClick, ariaLabel) => (
+    <button
+      onClick={onClick}
+      aria-label={ariaLabel}
+      className="w-6 h-6 rounded-full flex items-center justify-center text-sm font-bold shrink-0 focus:outline-none focus:ring-2"
+      style={{ background: C.panel, color: C.mute }}
+    >
+      {label}
+    </button>
+  );
   return (
-    <div className="flex items-center gap-2 py-1">
+    <div className="flex items-center gap-1.5 py-1">
       <button
         onClick={() => onChange({ ...set, done: !set.done })}
         aria-label={`Mark set ${i + 1} ${set.done ? "not done" : "done"}`}
-        className="w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold shrink-0 focus:outline-none focus:ring-2"
+        className="w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold shrink-0 focus:outline-none focus:ring-2 transition-transform active:scale-90"
         style={{
           background: set.done ? C.done : C.panel,
           color: set.done ? "#fff" : C.mute,
@@ -786,35 +809,48 @@ function SetRow({ i, set, onChange }) {
         {set.done ? "✓" : i + 1}
       </button>
       <div className="flex flex-col items-center gap-0.5">
-        <input
-          inputMode="decimal" placeholder="0"
-          value={set.weight}
-          onChange={(e) => onChange({ ...set, weight: e.target.value })}
-          className="w-14 px-1 py-1.5 rounded-lg text-sm border text-center"
-          style={{ borderColor: C.line, background: C.panel, fontFamily: font.body, fontVariantNumeric: "tabular-nums" }}
-        />
+        <div className="flex items-center gap-0.5">
+          {nudgeBtn("–", () => bump("weight", -weightStep, true), "Decrease weight")}
+          <input
+            inputMode="decimal" placeholder="0"
+            value={set.weight}
+            onChange={(e) => onChange({ ...set, weight: e.target.value })}
+            className="w-10 px-0.5 py-1.5 rounded-lg text-sm border text-center"
+            style={{ borderColor: C.line, background: C.panel, fontFamily: font.body, fontVariantNumeric: "tabular-nums" }}
+          />
+          {nudgeBtn("+", () => bump("weight", weightStep, true), "Increase weight")}
+        </div>
         <span className="text-[9px] uppercase tracking-wide leading-none" style={{ color: C.mute }}>kg</span>
       </div>
       <div className="flex flex-col items-center gap-0.5">
-        <input
-          inputMode="numeric" placeholder="0"
-          value={set.reps}
-          onChange={(e) => onChange({ ...set, reps: e.target.value })}
-          className="w-14 px-1 py-1.5 rounded-lg text-sm border text-center"
-          style={{ borderColor: C.line, background: C.panel, fontFamily: font.body, fontVariantNumeric: "tabular-nums" }}
-        />
+        <div className="flex items-center gap-0.5">
+          {nudgeBtn("–", () => bump("reps", -1, false), "Decrease reps")}
+          <input
+            inputMode="numeric" placeholder="0"
+            value={set.reps}
+            onChange={(e) => onChange({ ...set, reps: e.target.value })}
+            className="w-10 px-0.5 py-1.5 rounded-lg text-sm border text-center"
+            style={{ borderColor: C.line, background: C.panel, fontFamily: font.body, fontVariantNumeric: "tabular-nums" }}
+          />
+          {nudgeBtn("+", () => bump("reps", 1, false), "Increase reps")}
+        </div>
         <span className="text-[9px] uppercase tracking-wide leading-none" style={{ color: C.mute }}>reps</span>
       </div>
-      <span className="text-xs uppercase tracking-wide" style={{ color: C.done, fontWeight: 600 }}>{set.done ? "logged" : ""}</span>
     </div>
   );
 }
 
-function ExerciseCard({ ex, phase, sets, onSetChange, pending, onMarkAll }) {
+function ExerciseCard({ ex, phase, sets, onSetChange, pending, onMarkAll, onStartRest }) {
   const [open, setOpen] = useState(false);
   const doneCount = sets.filter((s) => s.done).length;
   const allDone = doneCount === sets.length;
   const stateColor = allDone ? C.done : pending ? C.accentDark : "transparent";
+  const weightStep = PROGRESSION_INCREMENT[ex.id] || 1;
+  const handleSetChange = (i, v) => {
+    const justCompleted = !sets[i].done && v.done;
+    onSetChange(i, v);
+    if (justCompleted && onStartRest) onStartRest(ex);
+  };
   return (
     <div
       className="rounded-2xl p-4 mb-3 transition-shadow"
@@ -859,7 +895,7 @@ function ExerciseCard({ ex, phase, sets, onSetChange, pending, onMarkAll }) {
 
       <div className="mt-3 pt-3" style={{ borderTop: `1px solid ${C.line}` }}>
         {sets.map((s, i) => (
-          <SetRow key={i} i={i} set={s} onChange={(v) => onSetChange(i, v)} />
+          <SetRow key={i} i={i} set={s} weightStep={weightStep} onChange={(v) => handleSetChange(i, v)} />
         ))}
       </div>
 
@@ -912,6 +948,26 @@ function Tracker({ userId, userEmail, onSignOut }) {
   const [bodyLog, setBodyLog] = useState([]);
   const [photos, setPhotos] = useState({});        // photoPath -> signed URL
   const [viewPhoto, setViewPhoto] = useState(null); // signed URL shown fullscreen
+
+  /* ---- rest timer: one active timer, started whenever a set is ticked done ---- */
+  const [rest, setRest] = useState(null); // { label, total, remaining } | null
+  useEffect(() => {
+    if (!rest || rest.remaining <= 0) return;
+    const t = setInterval(() => {
+      setRest((r) => (r ? { ...r, remaining: r.remaining - 1 } : r));
+    }, 1000);
+    return () => clearInterval(t);
+  }, [rest && rest.remaining > 0]);
+  useEffect(() => {
+    if (rest && rest.remaining === 0 && "vibrate" in navigator) {
+      try { navigator.vibrate([120, 60, 120]); } catch (e) { /* unsupported */ }
+    }
+  }, [rest && rest.remaining]);
+  function startRestFor(ex) {
+    const secs = parseRestSeconds(ex.rest);
+    if (!secs) return; // finishers with "—" rest get no timer
+    setRest({ label: ex.name, total: secs, remaining: secs });
+  }
 
   const idx = history.length;
   const current = nextSessionFor(schedule, history);
@@ -1218,17 +1274,21 @@ function Tracker({ userId, userEmail, onSignOut }) {
     return wk(now) === wk(d);
   }).length;
 
+  const allTodaySets = [...Object.values(logs), ...Object.values(carryLogs)].flat().filter(Boolean);
+  const todayDone = allTodaySets.filter((s) => s.done).length;
+  const todayPct = allTodaySets.length ? Math.round((todayDone / allTodaySets.length) * 100) : 0;
+
   const tabs = [
     ["today", "Today"], ["program", "Program"], ["progress", "Progress"], ["body", "Body log"],
   ];
 
   return (
-    <div className="min-h-screen pb-24" style={{ background: C.paper, fontFamily: font.body, color: C.ink }}>
+    <div className="min-h-screen" style={{ background: C.paper, fontFamily: font.body, color: C.ink, paddingBottom: rest ? "8rem" : "6rem" }}>
       <style>{`input:focus,button:focus{outline:2px solid ${C.accent};outline-offset:1px}
         @media (prefers-reduced-motion: reduce){*{transition:none!important;animation:none!important}}`}</style>
 
       {/* Header */}
-      <header className="px-4 pt-5 pb-4" style={{ background: C.ink, color: C.paper }}>
+      <header className="px-4 pb-4" style={{ background: C.ink, color: C.paper, paddingTop: "calc(1.25rem + env(safe-area-inset-top, 0px))" }}>
         <div className="max-w-xl mx-auto">
           <div className="flex items-center justify-between">
             <div>
@@ -1265,6 +1325,20 @@ function Tracker({ userId, userEmail, onSignOut }) {
               </button>
             ))}
           </div>
+          {allTodaySets.length > 0 && (
+            <div className="mt-3">
+              <div className="flex items-center justify-between text-[10px] uppercase tracking-wide mb-1" style={{ color: C.mutedOnInk }}>
+                <span>Today's sets</span>
+                <span style={{ fontVariantNumeric: "tabular-nums" }}>{todayDone}/{allTodaySets.length}</span>
+              </div>
+              <div className="h-1 rounded-full overflow-hidden" style={{ background: "rgba(255,255,255,0.12)" }}>
+                <div
+                  className="h-full rounded-full"
+                  style={{ width: `${todayPct}%`, background: todayPct === 100 ? C.done : C.accent, transition: "width 300ms ease" }}
+                />
+              </div>
+            </div>
+          )}
         </div>
       </header>
 
@@ -1329,6 +1403,7 @@ function Tracker({ userId, userEmail, onSignOut }) {
                     sets={carryLogs[c.exId] || c.sets}
                     onSetChange={(i, v) => setCarrySet(c.exId, i, v)}
                     onMarkAll={() => setCarryLogs((L) => ({ ...L, [c.exId]: (L[c.exId] || c.sets).map((s) => ({ ...s, done: true })) }))}
+                    onStartRest={startRestFor}
                   />
                 ))}
               </div>
@@ -1340,6 +1415,7 @@ function Tracker({ userId, userEmail, onSignOut }) {
                 sets={logs[ex.id] || []}
                 onSetChange={(i, v) => setSet(ex.id, i, v)}
                 onMarkAll={() => setLogs((L) => ({ ...L, [ex.id]: (L[ex.id] || []).map((s) => ({ ...s, done: true })) }))}
+                onStartRest={startRestFor}
               />
             ))}
 
@@ -1588,6 +1664,51 @@ function Tracker({ userId, userEmail, onSignOut }) {
           <img src={viewPhoto} alt="Progress check-in, full size" className="max-h-full max-w-full rounded-2xl" />
           <button className="absolute top-4 right-4 text-3xl font-bold" style={{ color: C.paper }}
             onClick={() => setViewPhoto(null)} aria-label="Close photo">×</button>
+        </div>
+      )}
+
+      {rest && (
+        <div
+          className="fixed left-4 right-4 max-w-xl mx-auto rounded-2xl overflow-hidden z-40"
+          style={{ background: C.ink, boxShadow: C.shadowMd, bottom: "calc(1rem + env(safe-area-inset-bottom, 0px))" }}
+          role="timer" aria-live="polite"
+        >
+          <div className="h-1" style={{ background: "rgba(255,255,255,0.12)" }}>
+            <div
+              className="h-full"
+              style={{
+                width: `${Math.max(0, (rest.remaining / rest.total) * 100)}%`,
+                background: rest.remaining === 0 ? C.done : C.accent,
+                transition: "width 1s linear",
+              }}
+            />
+          </div>
+          <div className="flex items-center gap-3 px-4 py-3">
+            <div className="flex-1 min-w-0">
+              <div className="text-[10px] uppercase tracking-wide" style={{ color: C.mutedOnInk }}>
+                {rest.remaining === 0 ? "Rest done" : "Resting"}
+              </div>
+              <div className="text-sm truncate" style={{ color: C.paper, fontFamily: font.display, fontWeight: 600 }}>
+                {rest.label}
+              </div>
+            </div>
+            <div className="text-3xl leading-none shrink-0" style={{ fontFamily: font.stat, color: rest.remaining === 0 ? C.done : C.accent, fontVariantNumeric: "tabular-nums" }}>
+              {fmtClock(rest.remaining)}
+            </div>
+            {rest.remaining > 0 && (
+              <button
+                onClick={() => setRest((r) => (r ? { ...r, total: r.total + 15, remaining: r.remaining + 15 } : r))}
+                className="text-xs px-2.5 py-1.5 rounded-full shrink-0"
+                style={{ background: "rgba(255,255,255,0.1)", color: C.paper }}
+              >
+                +15s
+              </button>
+            )}
+            <button onClick={() => setRest(null)} aria-label="Dismiss rest timer"
+              className="text-xl leading-none shrink-0 px-1" style={{ color: C.mutedOnInk }}>
+              ×
+            </button>
+          </div>
         </div>
       )}
     </div>
