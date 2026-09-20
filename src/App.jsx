@@ -16,23 +16,26 @@ const OWNER_EMAIL = "sandrocasciani1@gmail.com";
 /*  Design tokens — "Pine & Amber" training journal                    */
 /* ------------------------------------------------------------------ */
 const C = {
-  ink: "#1C2B2A",      // deep pine — text, diagram slates
-  paper: "#EDF2EE",    // pale sage — app background
+  ink: "#14171B",      // graphite — text, header, diagram slates
+  paper: "#F3F4EF",    // chalk — app background
+  panel: "#E7E8E3",    // one step down from paper — tinted panels, chips
   card: "#FFFFFF",
-  line: "#D7E0D9",
-  accent: "#F2A03D",   // amber — actions, motion arrows
-  accentDark: "#C97E1F",
-  done: "#2F7E6D",     // teal — completed
-  doneSoft: "#E2F0EB",
-  caution: "#C4553B",
-  cautionSoft: "#F9E9E4",
-  mute: "#5E6F6B",
-  amberSoft: "#FBEEDB",
+  line: "#E1E3DC",
+  accent: "#CFEE3A",   // volt — primary actions, motion arrows, brand mark
+  accentDark: "#B8791F",  // flag gold — rolled-over / pending marker only
+  done: "#1A7F8C",     // teal — completed
+  doneSoft: "#DCF1F3",
+  caution: "#D6432E",
+  cautionSoft: "#FBE6E1",
+  mute: "#5B6470",
+  mutedOnInk: "#9AA3AD", // secondary text on the dark header/overlays
+  amberSoft: "#FBEEDC",
 };
 
 const font = {
-  display: "'Sora','Avenir Next',system-ui,sans-serif",
-  body: "'Inter',system-ui,-apple-system,sans-serif",
+  display: "'Oswald','Arial Narrow',sans-serif",   // condensed, athletic — headings & labels
+  body: "'Manrope',system-ui,-apple-system,sans-serif",
+  stat: "'Bebas Neue','Oswald',sans-serif",         // scoreboard face — big numbers only
 };
 
 /* ------------------------------------------------------------------ */
@@ -44,31 +47,31 @@ function Slate({ children, label }) {
   return (
     <div className="rounded-xl overflow-hidden" style={{ background: C.ink }}>
       <svg viewBox="0 0 240 122" className="w-full" style={{ display: "block" }}>
-        <rect x="6" y="16" width="106" height="98" rx="8" fill="none" stroke="#3A4F4A" strokeWidth="1.5" />
-        <rect x="128" y="16" width="106" height="98" rx="8" fill="none" stroke="#3A4F4A" strokeWidth="1.5" />
-        <text x="12" y="11" fontSize="9" fill="#8FA79E" fontFamily="sans-serif">1 · START</text>
+        <rect x="6" y="16" width="106" height="98" rx="8" fill="none" stroke="#2B3038" strokeWidth="1.5" />
+        <rect x="128" y="16" width="106" height="98" rx="8" fill="none" stroke="#2B3038" strokeWidth="1.5" />
+        <text x="12" y="11" fontSize="9" fill="#8A93A0" fontFamily="sans-serif">1 · START</text>
         <text x="134" y="11" fontSize="9" fill={C.accent} fontFamily="sans-serif">2 · FINISH</text>
         <path d="M114 64 L126 64 M121 59 L126 64 L121 69" stroke={C.accent} strokeWidth="2.5" fill="none" strokeLinecap="round" />
         {children}
       </svg>
-      <div className="px-3 py-2 text-xs" style={{ color: "#B9CCC4", fontFamily: font.body }}>{label}</div>
+      <div className="px-3 py-2 text-xs" style={{ color: "#B8C0CC", fontFamily: font.body }}>{label}</div>
     </div>
   );
 }
-const S = { stroke: "#D9E6DF", strokeWidth: 3, strokeLinecap: "round", strokeLinejoin: "round", fill: "none" }; // body
-const M = { stroke: "#5E756E", strokeWidth: 2.5, strokeLinecap: "round", fill: "none" };                        // machine
+const S = { stroke: "#E4E7EC", strokeWidth: 3, strokeLinecap: "round", strokeLinejoin: "round", fill: "none" }; // body
+const M = { stroke: "#6B7280", strokeWidth: 2.5, strokeLinecap: "round", fill: "none" };                        // machine
 const A = { stroke: C.accent, strokeWidth: 2.5, strokeLinecap: "round", fill: "none" };                         // key cue
 const Head = ({ x, y }) => <circle cx={x} cy={y} r={6} {...S} />;
 const DB = ({ x, y }) => (
   <g>
-    <line x1={x - 4} y1={y} x2={x + 4} y2={y} stroke="#8FA79E" strokeWidth="3" />
-    <rect x={x - 7} y={y - 4} width={3.5} height={8} fill="#8FA79E" />
-    <rect x={x + 3.5} y={y - 4} width={3.5} height={8} fill="#8FA79E" />
+    <line x1={x - 4} y1={y} x2={x + 4} y2={y} stroke="#8A93A0" strokeWidth="3" />
+    <rect x={x - 7} y={y - 4} width={3.5} height={8} fill="#8A93A0" />
+    <rect x={x + 3.5} y={y - 4} width={3.5} height={8} fill="#8A93A0" />
   </g>
 );
 const Stack = ({ x, y }) => (
   <g>
-    {[0, 1, 2, 3, 4].map((i) => <rect key={i} x={x} y={y + i * 8} width={12} height={6} rx={1} fill="#3A4F4A" />)}
+    {[0, 1, 2, 3, 4].map((i) => <rect key={i} x={x} y={y + i * 8} width={12} height={6} rx={1} fill="#2B3038" />)}
   </g>
 );
 
@@ -750,7 +753,7 @@ function emptyLogs(type, phase, history = []) {
 /* ------------------------------------------------------------------ */
 function Chip({ children, tone = "mute" }) {
   const tones = {
-    mute: { bg: "#E4EBE6", fg: C.mute },
+    mute: { bg: C.panel, fg: C.mute },
     amber: { bg: C.amberSoft, fg: C.accentDark },
     done: { bg: C.doneSoft, fg: C.done },
     caution: { bg: C.cautionSoft, fg: C.caution },
@@ -835,7 +838,7 @@ function ExerciseCard({ ex, phase, sets, onSetChange, pending, onMarkAll }) {
           <button
             onClick={() => setOpen(!open)}
             className="text-xs px-3 py-1.5 rounded-full font-medium focus:outline-none focus:ring-2"
-            style={{ background: "#E4EBE6", color: C.ink }}
+            style={{ background: C.panel, color: C.ink }}
           >
             {open ? "Hide" : "How-to"}
           </button>
@@ -1209,29 +1212,28 @@ function Tracker({ userId, userEmail, onSignOut }) {
 
   return (
     <div className="min-h-screen pb-24" style={{ background: C.paper, fontFamily: font.body, color: C.ink }}>
-      <style>{`@import url('https://fonts.googleapis.com/css2?family=Sora:wght@600;700&family=Inter:wght@400;500;600&display=swap');
-        input:focus,button:focus{outline:2px solid ${C.accent};outline-offset:1px}
+      <style>{`input:focus,button:focus{outline:2px solid ${C.accent};outline-offset:1px}
         @media (prefers-reduced-motion: reduce){*{transition:none!important;animation:none!important}}`}</style>
 
       {/* Header */}
-      <header className="px-4 pt-5 pb-4" style={{ background: C.ink, color: "#EDF2EE" }}>
+      <header className="px-4 pt-5 pb-4" style={{ background: C.ink, color: C.paper }}>
         <div className="max-w-xl mx-auto">
           <div className="flex items-center justify-between">
             <div>
               <div className="text-xs tracking-widest uppercase" style={{ color: C.accent, fontWeight: 600 }}>
                 {PHASES[phase].name}
               </div>
-              <h1 className="text-2xl font-bold mt-0.5" style={{ fontFamily: font.display }}>
+              <h1 className="text-2xl uppercase tracking-wide" style={{ fontFamily: font.display, fontWeight: 600 }}>
                 Upright<span style={{ color: C.accent }}>.</span>
               </h1>
-              <p className="text-xs mt-0.5" style={{ color: "#9FB5AD" }}>
+              <p className="text-xs mt-0.5" style={{ color: C.mutedOnInk }}>
                 Your 2-day posture &amp; strength plan · Wed + Sat
               </p>
             </div>
             <div className="text-right">
-              <div className="text-3xl font-bold" style={{ fontFamily: font.display, color: C.accent }}>{history.length}</div>
-              <div className="text-xs" style={{ color: "#9FB5AD" }}>sessions<br />logged</div>
-              <button onClick={onSignOut} className="text-xs mt-1 underline" style={{ color: "#9FB5AD" }}>
+              <div className="text-4xl leading-none" style={{ fontFamily: font.stat, color: C.accent, fontVariantNumeric: "tabular-nums" }}>{history.length}</div>
+              <div className="text-xs uppercase tracking-wide mt-1" style={{ color: C.mutedOnInk }}>sessions<br />logged</div>
+              <button onClick={onSignOut} className="text-xs mt-1 underline" style={{ color: C.mutedOnInk }}>
                 Sign out
               </button>
             </div>
@@ -1242,7 +1244,7 @@ function Tracker({ userId, userEmail, onSignOut }) {
                 className="px-3 py-1.5 rounded-full text-sm font-medium"
                 style={{
                   background: tab === k ? C.accent : "rgba(255,255,255,0.08)",
-                  color: tab === k ? C.ink : "#C9D8D1",
+                  color: tab === k ? C.ink : C.mutedOnInk,
                 }}>
                 {label}
               </button>
@@ -1284,7 +1286,7 @@ function Tracker({ userId, userEmail, onSignOut }) {
                 </div>
                 <Chip tone="done">{thisWeekDone}/2 this week</Chip>
               </div>
-              <div className="mt-3 rounded-xl p-3 text-sm" style={{ background: "#F3F7F4" }}>
+              <div className="mt-3 rounded-xl p-3 text-sm" style={{ background: C.panel }}>
                 <strong>Warm-up (5 min):</strong> {WARMUP[current.type].join(" · ")}
               </div>
               <p className="text-xs mt-2" style={{ color: C.mute }}>
@@ -1359,8 +1361,8 @@ function Tracker({ userId, userEmail, onSignOut }) {
                 [`${thisWeekDone}/2`, "this week"],
               ].map(([v, l], i) => (
                 <div key={i} className="rounded-2xl p-3 text-center" style={{ background: C.card, border: `1.5px solid ${C.line}` }}>
-                  <div className="text-lg font-bold" style={{ fontFamily: font.display }}>{v}</div>
-                  <div className="text-xs" style={{ color: C.mute }}>{l}</div>
+                  <div className="text-2xl leading-none" style={{ fontFamily: font.stat, color: C.ink, fontVariantNumeric: "tabular-nums" }}>{v}</div>
+                  <div className="text-xs uppercase tracking-wide mt-1" style={{ color: C.mute }}>{l}</div>
                 </div>
               ))}
             </div>
@@ -1383,10 +1385,10 @@ function Tracker({ userId, userEmail, onSignOut }) {
             </div>
 
             <div className="rounded-2xl p-4 mb-6" style={{ background: C.card, border: `1.5px solid ${C.line}` }}>
-              <div className="flex items-center justify-between mb-2">
-                <h3 className="font-bold" style={{ fontFamily: font.display }}>Weight trend</h3>
+              <div className="flex items-center justify-between gap-2 mb-2">
+                <h3 className="font-bold shrink-0" style={{ fontFamily: font.display }}>Weight trend</h3>
                 <select value={trendEx} onChange={(e) => setTrendEx(e.target.value)}
-                  className="text-sm rounded-lg px-2 py-1 border" style={{ borderColor: C.line }}>
+                  className="text-sm rounded-lg px-2 py-1 border min-w-0 max-w-[60%]" style={{ borderColor: C.line }}>
                   {trackable.map((e) => <option key={e.id} value={e.id}>{e.name}</option>)}
                 </select>
               </div>
@@ -1411,7 +1413,7 @@ function Tracker({ userId, userEmail, onSignOut }) {
               {history.length === 0 && <Empty text="Finished sessions will be listed here with full set details." />}
               {history.map((h, i) => ({ h, i })).reverse().map(({ h, i }) => (
                 <div key={i} className="rounded-xl mb-2 overflow-hidden" style={{ border: `1.5px solid ${C.line}` }}>
-                  <div className="w-full flex items-center gap-1 px-2 py-1.5 text-sm" style={{ background: "#F3F7F4" }}>
+                  <div className="w-full flex items-center gap-1 px-2 py-1.5 text-sm" style={{ background: C.panel }}>
                     <button
                       onClick={() => setOpenHist(openHist === i ? null : i)}
                       className="flex-1 flex items-center justify-between px-1 py-0.5 text-left"
@@ -1481,7 +1483,7 @@ function Tracker({ userId, userEmail, onSignOut }) {
                   <button key={f} onClick={() => setFeel(f)}
                     className="px-3 py-1.5 rounded-full text-sm"
                     style={{
-                      background: feel === f ? C.doneSoft : "#F3F7F4",
+                      background: feel === f ? C.doneSoft : C.panel,
                       border: `1.5px solid ${feel === f ? C.done : C.line}`,
                     }}>{f}</button>
                 ))}
@@ -1503,7 +1505,7 @@ function Tracker({ userId, userEmail, onSignOut }) {
               />
               <div className="flex items-center gap-3 mb-3">
                 <label className="px-3 py-2 rounded-xl text-sm font-semibold cursor-pointer"
-                  style={{ background: "#F3F7F4", border: `1.5px solid ${C.line}`, color: C.ink }}>
+                  style={{ background: C.panel, border: `1.5px solid ${C.line}`, color: C.ink }}>
                   📷 {photoBusy ? "Processing…" : pendingPhoto ? "Replace photo" : "Attach copy (optional)"}
                   <input type="file" accept="image/*" onChange={handlePhotoPick} style={{ display: "none" }} />
                 </label>
@@ -1519,7 +1521,7 @@ function Tracker({ userId, userEmail, onSignOut }) {
               {photoMsg && <p className="text-xs mb-2" style={{ color: C.caution }}>{photoMsg}</p>}
               <button onClick={addBodyEntry}
                 className="w-full py-2.5 rounded-xl font-bold"
-                style={{ background: C.ink, color: "#EDF2EE", fontFamily: font.display }}>
+                style={{ background: C.ink, color: C.paper, fontFamily: font.display }}>
                 Save check-in
               </button>
             </div>
@@ -1533,7 +1535,7 @@ function Tracker({ userId, userEmail, onSignOut }) {
                   </button>
                 ) : (
                   <div className="w-14 h-14 rounded-xl flex items-center justify-center text-2xl shrink-0"
-                    style={{ background: "#F3F7F4", border: `1.5px dashed ${C.line}` }} title="No photo">📷</div>
+                    style={{ background: C.panel, border: `1.5px dashed ${C.line}` }} title="No photo">📷</div>
                 )}
                 <div className="flex-1">
                   <div className="text-xs" style={{ color: C.mute }}>{fmt(b.date)} · {b.feel}</div>
@@ -1558,10 +1560,10 @@ function Tracker({ userId, userEmail, onSignOut }) {
 
       {viewPhoto && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4"
-          style={{ background: "rgba(18,28,26,0.93)" }}
+          style={{ background: "rgba(20,23,27,0.93)" }}
           onClick={() => setViewPhoto(null)} role="dialog" aria-label="Progress photo viewer">
           <img src={viewPhoto} alt="Progress check-in, full size" className="max-h-full max-w-full rounded-2xl" />
-          <button className="absolute top-4 right-4 text-3xl font-bold" style={{ color: "#EDF2EE" }}
+          <button className="absolute top-4 right-4 text-3xl font-bold" style={{ color: C.paper }}
             onClick={() => setViewPhoto(null)} aria-label="Close photo">×</button>
         </div>
       )}
@@ -1595,7 +1597,7 @@ function SessionExerciseRow({ exId, sets, exById, rolled }) {
 
 function Empty({ text }) {
   return (
-    <div className="rounded-xl p-6 text-center text-sm" style={{ background: "#F3F7F4", color: "#7A8B86" }}>
+    <div className="rounded-xl p-6 text-center text-sm" style={{ background: C.panel, color: C.mute }}>
       {text}
     </div>
   );
@@ -1615,7 +1617,7 @@ function ProgramView({ phase }) {
             className="flex-1 px-2 py-2 rounded-xl text-xs font-semibold"
             style={{
               background: ph === i ? C.ink : C.card,
-              color: ph === i ? "#EDF2EE" : C.mute,
+              color: ph === i ? C.paper : C.mute,
               border: `1.5px solid ${ph === i ? C.ink : C.line}`,
             }}>
             Phase {i + 1}
@@ -1650,7 +1652,7 @@ function ProgramView({ phase }) {
         ))}
       </div>
 
-      <div className="rounded-xl p-3 mb-3 text-sm" style={{ background: "#F3F7F4" }}>
+      <div className="rounded-xl p-3 mb-3 text-sm" style={{ background: C.panel }}>
         <strong>Warm-up (5 min):</strong> {WARMUP[sess].join(" · ")}
       </div>
 
@@ -1678,7 +1680,7 @@ function ProgramCard({ ex, phase }) {
         </div>
         <button onClick={() => setOpen(!open)}
           className="text-xs px-3 py-1.5 rounded-full font-medium shrink-0"
-          style={{ background: "#E4EBE6", color: C.ink }}>
+          style={{ background: C.panel, color: C.ink }}>
           {open ? "Hide" : "Details"}
         </button>
       </div>

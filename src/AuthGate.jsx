@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from "react";
 import { supabase } from "./lib/supabaseClient.js";
 
-const C = { ink: "#1C2B2A", paper: "#EDF2EE", card: "#FFFFFF", line: "#D7E0D9", accent: "#F2A03D", mute: "#5E6F6B" };
-const font = { display: "'Sora','Avenir Next',system-ui,sans-serif", body: "'Inter',system-ui,-apple-system,sans-serif" };
+const C = { ink: "#14171B", paper: "#F3F4EF", card: "#FFFFFF", line: "#E1E3DC", accent: "#CFEE3A", mute: "#5B6470" };
+const font = { display: "'Oswald','Arial Narrow',sans-serif", body: "'Manrope',system-ui,-apple-system,sans-serif" };
 
 /* Wraps the app: shows a Google sign-in screen until a Supabase session
    exists, then renders children with the current session. */
@@ -49,7 +49,7 @@ export default function AuthGate({ children }) {
     return (
       <div className="min-h-screen flex items-center justify-center px-4" style={{ background: C.paper, fontFamily: font.body, color: C.ink }}>
         <div className="w-full max-w-sm rounded-2xl p-6" style={{ background: C.card, border: `1.5px solid ${C.line}` }}>
-          <h1 className="text-2xl font-bold mb-1" style={{ fontFamily: font.display }}>
+          <h1 className="text-2xl uppercase tracking-wide mb-1" style={{ fontFamily: font.display, fontWeight: 600 }}>
             Upright<span style={{ color: C.accent }}>.</span>
           </h1>
           <p className="text-sm mb-4" style={{ color: C.mute }}>
@@ -59,8 +59,8 @@ export default function AuthGate({ children }) {
             type="button"
             onClick={signInWithGoogle}
             disabled={sending}
-            className="w-full py-3 rounded-xl font-bold text-sm flex items-center justify-center gap-2"
-            style={{ background: C.accent, color: C.ink, fontFamily: font.display, opacity: sending ? 0.7 : 1 }}
+            className="w-full py-3 rounded-xl text-sm uppercase tracking-wide flex items-center justify-center gap-2"
+            style={{ background: C.accent, color: C.ink, fontFamily: font.display, fontWeight: 600, opacity: sending ? 0.7 : 1 }}
           >
             <svg width="18" height="18" viewBox="0 0 18 18" aria-hidden="true">
               <path fill="#4285F4" d="M17.64 9.2c0-.64-.06-1.25-.16-1.84H9v3.48h4.84a4.14 4.14 0 0 1-1.8 2.72v2.26h2.9c1.7-1.57 2.7-3.88 2.7-6.62z" />
