@@ -30,6 +30,8 @@ const C = {
   mute: "#5B6470",
   mutedOnInk: "#9AA3AD", // secondary text on the dark header/overlays
   amberSoft: "#FBEEDC",
+  shadowSm: "0 1px 2px rgba(20,23,27,0.06)",   // resting card elevation
+  shadowMd: "0 8px 24px rgba(20,23,27,0.14)",  // the one thing in active use
 };
 
 const font = {
@@ -772,30 +774,38 @@ function SetRow({ i, set, onChange }) {
       <button
         onClick={() => onChange({ ...set, done: !set.done })}
         aria-label={`Mark set ${i + 1} ${set.done ? "not done" : "done"}`}
-        className="w-7 h-7 rounded-lg flex items-center justify-center text-sm font-bold shrink-0 focus:outline-none focus:ring-2"
+        className="w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold shrink-0 focus:outline-none focus:ring-2"
         style={{
-          background: set.done ? C.done : "#fff",
+          background: set.done ? C.done : C.panel,
           color: set.done ? "#fff" : C.mute,
-          border: `2px solid ${set.done ? C.done : C.line}`,
+          boxShadow: set.done ? C.shadowSm : "none",
+          fontFamily: font.stat,
+          fontSize: "15px",
         }}
       >
         {set.done ? "✓" : i + 1}
       </button>
-      <input
-        inputMode="decimal" placeholder="kg"
-        value={set.weight}
-        onChange={(e) => onChange({ ...set, weight: e.target.value })}
-        className="w-16 px-2 py-1 rounded-lg text-sm border"
-        style={{ borderColor: C.line, fontFamily: font.body }}
-      />
-      <input
-        inputMode="numeric" placeholder="reps"
-        value={set.reps}
-        onChange={(e) => onChange({ ...set, reps: e.target.value })}
-        className="w-16 px-2 py-1 rounded-lg text-sm border"
-        style={{ borderColor: C.line }}
-      />
-      <span className="text-xs" style={{ color: C.mute }}>{set.done ? "logged" : ""}</span>
+      <div className="flex flex-col items-center gap-0.5">
+        <input
+          inputMode="decimal" placeholder="0"
+          value={set.weight}
+          onChange={(e) => onChange({ ...set, weight: e.target.value })}
+          className="w-14 px-1 py-1.5 rounded-lg text-sm border text-center"
+          style={{ borderColor: C.line, background: C.panel, fontFamily: font.body, fontVariantNumeric: "tabular-nums" }}
+        />
+        <span className="text-[9px] uppercase tracking-wide leading-none" style={{ color: C.mute }}>kg</span>
+      </div>
+      <div className="flex flex-col items-center gap-0.5">
+        <input
+          inputMode="numeric" placeholder="0"
+          value={set.reps}
+          onChange={(e) => onChange({ ...set, reps: e.target.value })}
+          className="w-14 px-1 py-1.5 rounded-lg text-sm border text-center"
+          style={{ borderColor: C.line, background: C.panel, fontFamily: font.body, fontVariantNumeric: "tabular-nums" }}
+        />
+        <span className="text-[9px] uppercase tracking-wide leading-none" style={{ color: C.mute }}>reps</span>
+      </div>
+      <span className="text-xs uppercase tracking-wide" style={{ color: C.done, fontWeight: 600 }}>{set.done ? "logged" : ""}</span>
     </div>
   );
 }
@@ -804,12 +814,14 @@ function ExerciseCard({ ex, phase, sets, onSetChange, pending, onMarkAll }) {
   const [open, setOpen] = useState(false);
   const doneCount = sets.filter((s) => s.done).length;
   const allDone = doneCount === sets.length;
+  const stateColor = allDone ? C.done : pending ? C.accentDark : "transparent";
   return (
     <div
-      className="rounded-2xl p-4 mb-3"
+      className="rounded-2xl p-4 mb-3 transition-shadow"
       style={{
         background: C.card,
-        border: `1.5px solid ${allDone ? C.done : pending ? C.accent : C.line}`,
+        boxShadow: open ? C.shadowMd : C.shadowSm,
+        borderLeft: `4px solid ${stateColor}`,
       }}
     >
       <div className="flex items-start justify-between gap-2">
@@ -829,7 +841,7 @@ function ExerciseCard({ ex, phase, sets, onSetChange, pending, onMarkAll }) {
           {!allDone && (
             <button
               onClick={onMarkAll}
-              className="text-xs px-3 py-1.5 rounded-full font-medium focus:outline-none focus:ring-2"
+              className="text-xs px-3 py-1.5 rounded-full font-semibold focus:outline-none focus:ring-2"
               style={{ background: C.doneSoft, color: C.done }}
             >
               ✓ all
@@ -837,15 +849,15 @@ function ExerciseCard({ ex, phase, sets, onSetChange, pending, onMarkAll }) {
           )}
           <button
             onClick={() => setOpen(!open)}
-            className="text-xs px-3 py-1.5 rounded-full font-medium focus:outline-none focus:ring-2"
-            style={{ background: C.panel, color: C.ink }}
+            className="text-xs px-3 py-1.5 rounded-full font-semibold focus:outline-none focus:ring-2"
+            style={{ background: "transparent", color: C.mute, border: `1.5px solid ${C.line}` }}
           >
             {open ? "Hide" : "How-to"}
           </button>
         </div>
       </div>
 
-      <div className="mt-2">
+      <div className="mt-3 pt-3" style={{ borderTop: `1px solid ${C.line}` }}>
         {sets.map((s, i) => (
           <SetRow key={i} i={i} set={s} onChange={(v) => onSetChange(i, v)} />
         ))}
@@ -1238,13 +1250,16 @@ function Tracker({ userId, userEmail, onSignOut }) {
               </button>
             </div>
           </div>
-          <div className="flex gap-2 mt-3">
+          <div className="grid grid-cols-4 gap-1.5 mt-4 p-1 rounded-full" style={{ background: "rgba(255,255,255,0.06)" }}>
             {tabs.map(([k, label]) => (
               <button key={k} onClick={() => setTab(k)}
-                className="px-3 py-1.5 rounded-full text-sm font-medium"
+                className="py-1.5 rounded-full text-xs uppercase tracking-wide text-center"
                 style={{
-                  background: tab === k ? C.accent : "rgba(255,255,255,0.08)",
+                  fontFamily: font.display,
+                  fontWeight: 600,
+                  background: tab === k ? C.accent : "transparent",
                   color: tab === k ? C.ink : C.mutedOnInk,
+                  boxShadow: tab === k ? C.shadowSm : "none",
                 }}>
                 {label}
               </button>
@@ -1273,7 +1288,7 @@ function Tracker({ userId, userEmail, onSignOut }) {
                 ✓ {saveNotice}
               </div>
             )}
-            <div className="rounded-2xl p-4 mb-4" style={{ background: C.card, border: `1.5px solid ${C.line}` }}>
+            <div className="rounded-2xl p-4 mb-4" style={{ background: C.card, boxShadow: C.shadowMd }}>
               <div className="flex items-center justify-between">
                 <div>
                   <div className="text-xs uppercase tracking-wide" style={{ color: C.mute }}>
@@ -1337,8 +1352,14 @@ function Tracker({ userId, userEmail, onSignOut }) {
             )}
             <button
               onClick={finishSession}
-              className="w-full py-3.5 rounded-2xl font-bold text-base mt-2"
-              style={{ background: finishArmed ? C.caution : C.accent, color: finishArmed ? "#fff" : C.ink, fontFamily: font.display }}
+              className="w-full py-3.5 rounded-2xl text-base uppercase tracking-wide mt-2"
+              style={{
+                background: finishArmed ? C.caution : C.accent,
+                color: finishArmed ? "#fff" : C.ink,
+                fontFamily: font.display,
+                fontWeight: 600,
+                boxShadow: C.shadowMd,
+              }}
             >
               {finishArmed ? "Tap again to finish with everything skipped" : `Finish session ${current.type} →`}
             </button>
@@ -1360,14 +1381,14 @@ function Tracker({ userId, userEmail, onSignOut }) {
                 [history.reduce((a, h) => a + h.volume, 0).toLocaleString() + " kg", "total volume"],
                 [`${thisWeekDone}/2`, "this week"],
               ].map(([v, l], i) => (
-                <div key={i} className="rounded-2xl p-3 text-center" style={{ background: C.card, border: `1.5px solid ${C.line}` }}>
+                <div key={i} className="rounded-2xl p-3 text-center" style={{ background: C.card, boxShadow: C.shadowSm }}>
                   <div className="text-2xl leading-none" style={{ fontFamily: font.stat, color: C.ink, fontVariantNumeric: "tabular-nums" }}>{v}</div>
                   <div className="text-xs uppercase tracking-wide mt-1" style={{ color: C.mute }}>{l}</div>
                 </div>
               ))}
             </div>
 
-            <div className="rounded-2xl p-4 mb-4" style={{ background: C.card, border: `1.5px solid ${C.line}` }}>
+            <div className="rounded-2xl p-4 mb-4" style={{ background: C.card, boxShadow: C.shadowSm }}>
               <h3 className="font-bold mb-2" style={{ fontFamily: font.display }}>Training volume per session</h3>
               {volumeSeries.length ? (
                 <ResponsiveContainer width="100%" height={180}>
@@ -1384,7 +1405,7 @@ function Tracker({ userId, userEmail, onSignOut }) {
               )}
             </div>
 
-            <div className="rounded-2xl p-4 mb-6" style={{ background: C.card, border: `1.5px solid ${C.line}` }}>
+            <div className="rounded-2xl p-4 mb-6" style={{ background: C.card, boxShadow: C.shadowSm }}>
               <div className="flex items-center justify-between gap-2 mb-2">
                 <h3 className="font-bold shrink-0" style={{ fontFamily: font.display }}>Weight trend</h3>
                 <select value={trendEx} onChange={(e) => setTrendEx(e.target.value)}
@@ -1408,7 +1429,7 @@ function Tracker({ userId, userEmail, onSignOut }) {
               )}
             </div>
 
-            <div className="rounded-2xl p-4 mb-4" style={{ background: C.card, border: `1.5px solid ${C.line}` }}>
+            <div className="rounded-2xl p-4 mb-4" style={{ background: C.card, boxShadow: C.shadowSm }}>
               <h3 className="font-bold mb-2" style={{ fontFamily: font.display }}>Session history</h3>
               {history.length === 0 && <Empty text="Finished sessions will be listed here with full set details." />}
               {history.map((h, i) => ({ h, i })).reverse().map(({ h, i }) => (
@@ -1455,8 +1476,10 @@ function Tracker({ userId, userEmail, onSignOut }) {
 
             <button
               onClick={resetAll}
-              className="w-full py-2.5 rounded-xl text-sm font-semibold mb-6"
+              className="w-full py-2.5 rounded-xl text-sm uppercase tracking-wide mb-6"
               style={{
+                fontFamily: font.display,
+                fontWeight: 600,
                 background: resetArmed ? C.caution : "transparent",
                 color: resetArmed ? "#fff" : C.caution,
                 border: `1.5px solid ${C.caution}`,
@@ -1470,7 +1493,7 @@ function Tracker({ userId, userEmail, onSignOut }) {
         {/* ------------------------ BODY LOG ------------------------ */}
         {tab === "body" && (
           <div>
-            <div className="rounded-2xl p-4 mb-4" style={{ background: C.card, border: `1.5px solid ${C.line}` }}>
+            <div className="rounded-2xl p-4 mb-4" style={{ background: C.card, boxShadow: C.shadowSm }}>
               <h3 className="font-bold" style={{ fontFamily: font.display }}>New check-in</h3>
               <p className="text-xs mb-3" style={{ color: C.mute }}>
                 One per session is plenty. Recommended: keep the photo in your iPhone Photos and just note its
@@ -1520,15 +1543,15 @@ function Tracker({ userId, userEmail, onSignOut }) {
               </div>
               {photoMsg && <p className="text-xs mb-2" style={{ color: C.caution }}>{photoMsg}</p>}
               <button onClick={addBodyEntry}
-                className="w-full py-2.5 rounded-xl font-bold"
-                style={{ background: C.ink, color: C.paper, fontFamily: font.display }}>
+                className="w-full py-2.5 rounded-xl uppercase tracking-wide"
+                style={{ background: C.accent, color: C.ink, fontFamily: font.display, fontWeight: 600, boxShadow: C.shadowSm }}>
                 Save check-in
               </button>
             </div>
 
             {bodyLog.length === 0 && <Empty text="No check-ins yet. After Saturday's session, snap a photo and jot down how you felt." />}
             {bodyLog.map((b, i) => (
-              <div key={i} className="rounded-2xl p-4 mb-3 flex gap-3 items-start" style={{ background: C.card, border: `1.5px solid ${C.line}` }}>
+              <div key={i} className="rounded-2xl p-4 mb-3 flex gap-3 items-start" style={{ background: C.card, boxShadow: C.shadowSm }}>
                 {b.photoPath && photos[b.photoPath] ? (
                   <button onClick={() => setViewPhoto(photos[b.photoPath])} className="shrink-0" aria-label="View progress photo">
                     <img src={photos[b.photoPath]} alt="Progress check-in" className="w-14 h-14 rounded-xl object-cover" />
@@ -1626,7 +1649,7 @@ function ProgramView({ phase }) {
         ))}
       </div>
 
-      <div className="rounded-2xl p-4 mb-4" style={{ background: C.card, border: `1.5px solid ${C.line}` }}>
+      <div className="rounded-2xl p-4 mb-4" style={{ background: C.card, boxShadow: C.shadowSm }}>
         <h3 className="font-bold" style={{ fontFamily: font.display }}>{PHASES[ph].name}</h3>
         <div className="text-xs mb-2" style={{ color: C.mute }}>{PHASES[ph].span}</div>
         <p className="text-sm mb-2">{PHASES[ph].focus}</p>
@@ -1666,7 +1689,7 @@ function ProgramView({ phase }) {
 function ProgramCard({ ex, phase }) {
   const [open, setOpen] = useState(false);
   return (
-    <div className="rounded-2xl p-4 mb-3" style={{ background: C.card, border: `1.5px solid ${C.line}` }}>
+    <div className="rounded-2xl p-4 mb-3" style={{ background: C.card, boxShadow: C.shadowSm }}>
       <div className="flex items-start justify-between gap-2">
         <div>
           <div className="flex flex-wrap gap-2">
